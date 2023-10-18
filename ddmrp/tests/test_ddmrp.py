@@ -1105,7 +1105,169 @@ class TestDdmrp(TestDdmrpCommon):
             self.warehouse.lot_stock_id,
         )
 
-    def test_45_adu_calculation_blended_120_days_estimated_mrp(self):
+    def test_45_action_view_supply_buffer_purchase(self):
+        """
+        Verify that the view incoming quantities action for a purchased buffer
+        displays the correct results.
+        """
+        self.buffer_purchase.auto_procure = True
+        self.buffer_purchase.auto_procure_option = "standard"
+        self.buffer_purchase.cron_actions()
+        pol = self.pol_model.search([("product_id", "=", self.product_purchased.id)])
+        # Check that RFQs are correctly computed
+        po_inside_dlt_ids = self.buffer_purchase.action_view_rfq_inside_dlt_window()[
+            "domain"
+        ][0][2]
+        po_outside_dlt_ids = self.buffer_purchase.action_view_rfq_outside_dlt_window()[
+            "domain"
+        ][0][2]
+        self.assertEqual(po_inside_dlt_ids, pol.order_id.ids)
+        self.assertEqual(len(po_outside_dlt_ids), 0)
+        pol.date_planned += timedelta(days=1)
+        po_inside_dlt_ids = self.buffer_purchase.action_view_rfq_inside_dlt_window()[
+            "domain"
+        ][0][2]
+        po_outside_dlt_ids = self.buffer_purchase.action_view_rfq_outside_dlt_window()[
+            "domain"
+        ][0][2]
+        self.assertEqual(len(po_inside_dlt_ids), 0)
+        self.assertEqual(po_outside_dlt_ids, pol.order_id.ids)
+        # Check that incoming quantities are correctly computed
+        pol.order_id.button_confirm()
+        po_inside_dlt_ids = self.buffer_purchase.action_view_supply(outside_dlt=False)[
+            "domain"
+        ][0][2]
+        po_outside_dlt_ids = self.buffer_purchase.action_view_supply(outside_dlt=True)[
+            "domain"
+        ][0][2]
+        self.assertEqual(len(po_inside_dlt_ids), 0)
+        self.assertEqual(po_outside_dlt_ids, pol.order_id.ids)
+        pol.mapped("move_ids.picking_id").scheduled_date -= timedelta(days=1)
+        po_inside_dlt_ids = self.buffer_purchase.action_view_supply(outside_dlt=False)[
+            "domain"
+        ][0][2]
+        po_outside_dlt_ids = self.buffer_purchase.action_view_supply(outside_dlt=True)[
+            "domain"
+        ][0][2]
+        self.assertEqual(po_inside_dlt_ids, pol.order_id.ids)
+        self.assertEqual(len(po_outside_dlt_ids), 0)
+
+    def test_46_action_view_supply_buffer_manufacture(self):
+        """
+        Verify that the view incoming quantities action for a manufactured buffer
+        displays the correct results.
+        """
+        self.quant.quantity = 0
+        self.buffer_a.buffer_profile_id = self.buffer_profile_mmm.id
+        self.buffer_a.auto_procure = True
+        self.buffer_a.auto_procure_option = "standard"
+        self.buffer_a.cron_actions()
+        mo = self.buffer_a.mrp_production_ids.filtered(
+            lambda x: x.product_id == self.productA
+        )
+        # Check that MOs are correctly computed
+        mo_inside_dlt_ids = self.buffer_a.action_view_supply(outside_dlt=False)[
+            "domain"
+        ][0][2]
+        mo_outside_dlt_ids = self.buffer_a.action_view_supply(outside_dlt=True)[
+            "domain"
+        ][0][2]
+        self.assertEqual(mo_inside_dlt_ids, mo.ids)
+        self.assertEqual(len(mo_outside_dlt_ids), 0)
+        mo.date_planned_finished += timedelta(days=1)
+        mo_inside_dlt_ids = self.buffer_a.action_view_supply(outside_dlt=False)[
+            "domain"
+        ][0][2]
+        mo_outside_dlt_ids = self.buffer_a.action_view_supply(outside_dlt=True)[
+            "domain"
+        ][0][2]
+        self.assertEqual(len(mo_inside_dlt_ids), 0)
+        self.assertEqual(mo_outside_dlt_ids, mo.ids)
+
+    def test_47_action_view_supply_buffer_purchase_3_steps(self):
+        """
+        Verify that the view incoming quantities action for a purchased buffer displays
+        the correct results with a 3-step configuration.
+        """
+        self.warehouse.reception_steps = "three_steps"
+        self.buffer_purchase.auto_procure = True
+        self.buffer_purchase.auto_procure_option = "standard"
+        self.buffer_purchase.cron_actions()
+        pol = self.pol_model.search([("product_id", "=", self.product_purchased.id)])
+        # Check that RFQs are correctly computed
+        po_inside_dlt_ids = self.buffer_purchase.action_view_rfq_inside_dlt_window()[
+            "domain"
+        ][0][2]
+        po_outside_dlt_ids = self.buffer_purchase.action_view_rfq_outside_dlt_window()[
+            "domain"
+        ][0][2]
+        self.assertEqual(po_inside_dlt_ids, pol.order_id.ids)
+        self.assertEqual(len(po_outside_dlt_ids), 0)
+        pol.date_planned += timedelta(days=1)
+        po_inside_dlt_ids = self.buffer_purchase.action_view_rfq_inside_dlt_window()[
+            "domain"
+        ][0][2]
+        po_outside_dlt_ids = self.buffer_purchase.action_view_rfq_outside_dlt_window()[
+            "domain"
+        ][0][2]
+        self.assertEqual(len(po_inside_dlt_ids), 0)
+        self.assertEqual(po_outside_dlt_ids, pol.order_id.ids)
+        # Check that incoming quantities are correctly computed
+        pol.order_id.button_confirm()
+        po_inside_dlt_ids = self.buffer_purchase.action_view_supply(outside_dlt=False)[
+            "domain"
+        ][0][2]
+        po_outside_dlt_ids = self.buffer_purchase.action_view_supply(outside_dlt=True)[
+            "domain"
+        ][0][2]
+        self.assertEqual(len(po_inside_dlt_ids), 0)
+        self.assertEqual(po_outside_dlt_ids, pol.order_id.ids)
+        moves = pol.mapped("move_ids")
+        while moves.mapped("move_dest_ids"):
+            moves = moves.mapped("move_dest_ids")
+        moves.mapped("picking_id").scheduled_date -= timedelta(days=1)
+        po_inside_dlt_ids = self.buffer_purchase.action_view_supply(outside_dlt=False)[
+            "domain"
+        ][0][2]
+        po_outside_dlt_ids = self.buffer_purchase.action_view_supply(outside_dlt=True)[
+            "domain"
+        ][0][2]
+        self.assertEqual(po_inside_dlt_ids, pol.order_id.ids)
+        self.assertEqual(len(po_outside_dlt_ids), 0)
+
+    def test_48_action_view_supply_buffer_manufacture_3_steps(self):
+        """
+        Verify that the view incoming quantities action for a manufactured buffer displays
+        the correct results with a 3-step configuration.
+        """
+        self.warehouse.manufacture_steps = "pbm_sam"
+        self.quant.quantity = 0
+        self.buffer_a.buffer_profile_id = self.buffer_profile_mmm.id
+        self.buffer_a.auto_procure = True
+        self.buffer_a.auto_procure_option = "standard"
+        self.buffer_a.cron_actions()
+        mo = self.env["mrp.production"].search([("product_id", "=", self.productA.id)])
+        # Check that MOs are correctly computed
+        mo_inside_dlt_ids = self.buffer_a.action_view_supply(outside_dlt=False)[
+            "domain"
+        ][0][2]
+        mo_outside_dlt_ids = self.buffer_a.action_view_supply(outside_dlt=True)[
+            "domain"
+        ][0][2]
+        self.assertEqual(mo_inside_dlt_ids, mo.ids)
+        self.assertEqual(len(mo_outside_dlt_ids), 0)
+        move = self.buffer_a._search_stock_moves_incoming()
+        move.picking_id.scheduled_date += timedelta(days=1)
+        mo_inside_dlt_ids = self.buffer_a.action_view_supply(outside_dlt=False)[
+            "domain"
+        ][0][2]
+        mo_outside_dlt_ids = self.buffer_a.action_view_supply(outside_dlt=True)[
+            "domain"
+        ][0][2]
+        self.assertEqual(len(mo_inside_dlt_ids), 0)
+        self.assertEqual(mo_outside_dlt_ids, mo.ids)
+
+    def test_49_adu_calculation_blended_120_days_estimated_mrp(self):
         """Test blended ADU calculation method with direct and indirect demand."""
         mrpMoveModel = self.env["mrp.move"]
         mrpAreaModel = self.env["mrp.area"]
