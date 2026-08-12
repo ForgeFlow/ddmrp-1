@@ -128,6 +128,42 @@ class TestDdmrpMaxProcTime(TestDdmrpCommon):
             ],
         )
 
+    @freeze_time("2020-12-10 10:00:00")
+    def test_reschedule_proc_time_with_calendar_leave(self):
+        """Reschedule moves based on the proc time, skipping time off"""
+        self.buffer_profile_distr.distributed_reschedule_max_proc_time = 90
+        self.warehouse.calendar_compute_leaves = True
+        self.env["resource.calendar.leaves"].create(
+            {
+                "calendar_id": self.warehouse.calendar_id.id,
+                "resource_id": False,
+                "date_from": "2020-12-11 07:00:00",
+                "date_to": "2020-12-11 09:00:00",
+                "time_type": "leave",
+            }
+        )
+
+        self.env["stock.quant"]._update_available_quantity(
+            self.product_c_green, self.replenish_location, 4000
+        )
+        # lie about the recommended qty to force creation of replenishment
+        self.buffer_dist.procure_recommended_qty = 10000
+
+        self.create_orderpoint_procurement(self.buffer_dist)
+        moves = self.env["stock.move"].search(
+            [("product_id", "=", self.product_c_green.id)]
+        )
+
+        self.assertRecordValues(
+            moves,
+            [
+                # the first two working hours are time off, so the 1:30 hour
+                # of procurement time starts at 9:00 (UTC) instead of 7:00
+                {"date": fields.Datetime.to_datetime("2020-12-11 10:30:00")},
+                {"date": fields.Datetime.to_datetime("2020-12-11 10:30:00")},
+            ],
+        )
+
     @freeze_time("2020-12-10 23:00:00")
     def test_03_reschedule_to_next_day(self):
         self.buffer_profile_distr.distributed_reschedule_max_proc_time = 90

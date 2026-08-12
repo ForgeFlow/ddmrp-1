@@ -305,15 +305,14 @@ class StockBuffer(models.Model):
             if self.warehouse_id.calendar_id:
                 dt_planned = self.warehouse_id.wh_plan_days(fields.datetime.now(), dlt)
                 if max_proc_time:
-                    calendar = self.warehouse_id.calendar_id
                     # We found the day with "wh_plan_day", now determine
                     # the first available hour in the day (wh_plan_day returns
                     # the stop hour), and add the procurement time.
-                    dt_planned = calendar.plan_hours(
-                        # expect hours
-                        max_proc_time / 60,
+                    dt_planned = self.warehouse_id.wh_plan_hours(
                         # start from the first working hours available
                         dt_planned.replace(hour=0, minute=0, second=0),
+                        # expect hours
+                        max_proc_time / 60,
                     )
 
             else:
