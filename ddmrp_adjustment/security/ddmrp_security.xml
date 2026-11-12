@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <odoo noupdate="0">
-    <record model="ir.rule" id="stock_buffer_profile_variability_comp_rule">
+    <record id="stock_buffer_profile_variability_comp_rule" model="ir.rule">
         <field name="name">DDMRP adjustment multi-company</field>
         <field name="model_id" ref="model_ddmrp_adjustment" />
         <field name="global" eval="True" />
