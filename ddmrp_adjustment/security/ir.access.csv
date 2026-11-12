@@ -1,0 +1,8 @@
+id,name,model_id,group_id/id,operation,domain
+ddmrp_adjustment_access_user,ddmrp.adjustment.user,ddmrp.adjustment,stock.group_stock_user,r,
+ddmrp_adjustment_access_manager,ddmrp.adjustment.manager,ddmrp.adjustment,ddmrp.group_ddmrp_manager,crud,
+ddmrp_adjustment_access_buffer_maintainer,ddmrp.adjustment.buffer.maintainer,ddmrp.adjustment,ddmrp.group_stock_buffer_maintainer,crud,
+ddmrp_adjustment_access_demand_user,ddmrp.adjustment.demand.user,ddmrp.adjustment.demand,stock.group_stock_user,r,
+ddmrp_adjustment_access_demand_manager,ddmrp.adjustment.demand.manager,ddmrp.adjustment.demand,ddmrp.group_ddmrp_manager,crud,
+ddmrp_adjustment_access_demand_buffer_maintainer,ddmrp.adjustment.buffer.maintainer,ddmrp.adjustment.demand,ddmrp.group_stock_buffer_maintainer,crud,
+stock_buffer_profile_variability_comp_rule,DDMRP adjustment multi-company,ddmrp.adjustment,,crud,"['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]"

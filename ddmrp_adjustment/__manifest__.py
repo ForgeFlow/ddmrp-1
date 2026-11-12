@@ -4,7 +4,7 @@
 {
     "name": "DDMRP Adjustment",
     "summary": "Allow to apply factor adjustments to buffers.",
-    "version": "19.0.1.0.0",
+    "version": "20.0.1.0.0",
     "development_status": "Beta",
     "author": "ForgeFlow, Odoo Community Association (OCA)",
     "maintainers": ["JordiBForgeFlow", "LoisRForgeFlow"],
@@ -12,8 +12,7 @@
     "category": "Warehouse",
     "depends": ["ddmrp", "date_range"],
     "data": [
-        "security/ir.model.access.csv",
-        "security/ddmrp_security.xml",
+        "security/ir.access.csv",
         "views/ddmrp_adjustment_view.xml",
         "views/ddmrp_adjustment_demand_view.xml",
         "views/stock_buffer_view.xml",

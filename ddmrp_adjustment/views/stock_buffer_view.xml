@@ -12,7 +12,7 @@
                     string="DAF Demand Allocation"
                     name="action_view_demand_to_components"
                     class="oe_stat_button"
-                    icon="fa-caret-square-o-down"
+                    icon="arrow_drop_down_circle"
                     type="object"
                     invisible="count_ddmrp_adjustment_demand == 0"
                 />

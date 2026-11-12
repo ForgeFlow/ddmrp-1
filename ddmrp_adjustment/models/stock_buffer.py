@@ -22,7 +22,6 @@ class StockBuffer(models.Model):
 
     extra_demand_ids = fields.One2many(
         comodel_name="ddmrp.adjustment.demand",
-        string="Extra Demand",
         inverse_name="buffer_id",
         help="Demand associated to Demand Adjustment Factors applied to "
         "parent buffers.",
@@ -115,7 +114,7 @@ class StockBuffer(models.Model):
 
         def _get_extra_demand(bom, line, buffer_id, factor):
             qty = factor * line.product_qty / bom.product_qty
-            extra = line.product_uom_id._compute_quantity(qty, buffer_id.product_uom)
+            extra = line.uom_id._compute_quantity(qty, buffer_id.product_uom)
             return extra
 
         def _create_demand(bom, factor=1, level=0, clt=0):
@@ -143,13 +142,13 @@ class StockBuffer(models.Model):
                     lambda bom: bom.context_location_id == location  # noqa: B023
                 ) or line_boms.filtered(lambda b: not b.context_location_id)
                 if child_bom:
-                    line_qty = line.product_uom_id._compute_quantity(
-                        line.product_qty, child_bom.product_uom_id
+                    line_qty = line.uom_id._compute_quantity(
+                        line.product_qty, child_bom.uom_id
                     )
                     new_factor = factor * line_qty / bom.product_qty
                     _create_demand(child_bom[0], new_factor, level, clt)
 
-        initial_factor = uom_id._compute_quantity(demand, init_bom.product_uom_id)
+        initial_factor = uom_id._compute_quantity(demand, init_bom.uom_id)
         _create_demand(init_bom, factor=initial_factor)
         return True
 
